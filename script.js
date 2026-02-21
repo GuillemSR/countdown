@@ -14,9 +14,8 @@ const SECONDS_PER_MINUTE = 60;
 
 const params = new URLSearchParams(window.location.search);
 const widgetId = (params.get("widgetId") || "").trim();
-const editToken = (params.get("token") || "").trim();
 const hasWidgetId = widgetId !== "";
-const canEdit = hasWidgetId && editToken !== "";
+const canEdit = hasWidgetId;
 const isEmbedded = window.self !== window.top || params.get("embed") === "1";
 
 let intervalId = null;
@@ -228,10 +227,7 @@ async function loadRemoteConfig() {
 }
 
 async function saveRemoteConfig() {
-  if (!canEdit) {
-    setSaveStatus("Falta el token de edición en la URL.", "error");
-    return;
-  }
+  if (!canEdit) return;
 
   const draft = buildDraft();
   if (!draft) {
@@ -254,7 +250,6 @@ async function saveRemoteConfig() {
     },
     body: JSON.stringify({
       p_widget_id: widgetId,
-      p_edit_token: editToken,
       p_title: draft.title,
       p_target_date: draft.targetDate.toISOString(),
       p_bg_color_a: draft.bgColorA,
@@ -265,14 +260,7 @@ async function saveRemoteConfig() {
   });
 
   if (!response.ok) {
-    setSaveStatus("No se pudo guardar. Revisa widgetId y token.", "error");
-    if (saveConfigEl) saveConfigEl.disabled = false;
-    return;
-  }
-
-  const result = await response.json();
-  if (result !== true) {
-    setSaveStatus("No autorizado para guardar este widget.", "error");
+    setSaveStatus("No se pudo guardar.", "error");
     if (saveConfigEl) saveConfigEl.disabled = false;
     return;
   }
